@@ -110,6 +110,31 @@ class Timeseries:
         finally:
             session.close()
 
+    def get_timeseries_with_original_index(self, timeseries_id, start_date, end_date):
+        """
+        Retrieves the timeseries corresponding to given id s.t.
+        time is in between given start_date (inclusive) and end_date (exclusive).
+
+        :param timeseries_id: string timeseries id
+        :param start_date: datetime object
+        :param end_date: datetime object
+        :return: array of [id, time, value]
+        """
+
+        if not isinstance(start_date, datetime) or not isinstance(end_date, datetime):
+            raise ValueError('start_date and/or end_date are not of datetime type.', start_date, end_date)
+
+        session = self.Session()
+        try:
+            result = session.query(Data).filter(
+                Data.id == timeseries_id,
+                Data.time >= start_date, Data.time < end_date
+            ).all()
+            timeseries = [[data_obj.time, data_obj.value] for data_obj in result]
+            return pd.DataFrame(data=timeseries, columns=['time', 'value'])
+        finally:
+            session.close()
+
     def update_timeseries(self, timeseries_id, timeseries, should_overwrite):
 
         # timeseries should be a pnadas Dataframe, with 'time' as index, and 'value' as the column.
